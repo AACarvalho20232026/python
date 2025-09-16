@@ -1,0 +1,19 @@
+#operadores aritmeticos
+print(idade + 5)
+print(altura * 2)
+print(idade / 2)
+print(altura - 1)
+
+#operadores de comparaçao 
+print(idade > 18)
+print(idade == 18)
+print(idade != 18)
+print(idade <= 18)
+print(idade >= 18)
+print(idade < 18)
+print(idade >= 18 and estudante)
+print(idade >= 18) or estudante
+print(not estudante)
+
+
+#instruçao condicional
