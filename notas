@@ -95,3 +95,120 @@ Pessoas = ["Alex","Bruno","Carlos","Diogo","Hugo"]
 
 for Pessoas in Pessoas:
     print(Pessoas)
+---------------------------------------------------------------------------
+x = "awesome"
+
+def myfunc():
+    global y
+    y = "cool"
+    print("Python is " + x)
+
+myfunc()
+print("Python is " + y)
+
+#print do data type
+
+print(type(x))
+----------------------------------------------------------------------------
+idade = 18
+ano_de_nascimento = "2006"
+
+txt = f"Eu tenho {idade} anos, mas nasci em {ano_de_nascimento}"
+
+print(txt)
+
+-------------------------------------------------------------------------------
+#listas
+frutas = ["maça", "banana", "laranja"]
+
+# print(frutas)
+
+# print(frutas[0]) 
+ 
+# frutas[0] = "pera"
+
+# frutas.extend(["uva","manga"]) #adiciona mais a lista
+
+# frutas.append # adiciona ao final da lista
+
+# frutas.insert() # insere na posiçao indicada
+
+# frutas.sort() # organiza
+
+# frutas.pop() # remove
+
+# frutas.count() # conta quantas vezes um elemento aparece na lista
+
+ carros = ("BMW", "Audi", "Mercedes")
+# (marca1, marca2, marca3) = carros
+
+# print(marca1)
+# print(carros)
+# print(carros[1])
+
+# for carro in carros:
+#     print(carros)
+
+
+# oMeuSet = {"maça", "banana", "laranja"} # n pode redefinir valores
+
+# for set in oMeuSet:
+#     print(set)
+
+# oMeuSet.add("banana")
+
+# oMeuSet.remove("banana")
+
+# oMeuSet2 = frozenset({"maça", "banana", "laranja"})
+
+thisdict = {
+    "brand": "Ford",
+    "model": "Mustang",
+    "year": 1964
+}
+
+# print(thisdict["model"])
+
+# thisdict(thisdict["model"])
+
+for key in thisdict:
+    print(thisdict[key])
+
+x=2
+
+match x:
+    case 1:
+        print("x é 1")
+    case 2:
+        print("x é 2")
+    case _:
+        print("x nao é nem 1 nem 2")
+
+
+aMinhaLista = ["maça", "banana", "laranja"]
+
+for element in aMinhaLista:
+    if element == "banana":
+        break
+
+x = range(6)
+
+for n in x:
+    print(n)
+
+aMinhaLista = ["maça", "banana", "laranja"]
+
+for i in range(3,10,2):
+    print(i)
+
+x = lambda a : a + 10
+print(x(5))
+
+lFunc = lambda a : a + 10
+print(lFunc(5))
+
+lFunc2 = lambda : print("Ola")
+lFunc2()
+
+lFunc3 = lambda a, b : a * b
+print(lFunc3(5, 6))
