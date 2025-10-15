@@ -1,34 +1,49 @@
 import pygame
 import random
 import sys
+import json
+import os
+import time
 
-# Inicializar o Pygame
+# --- CONFIGURAÇÃO DO FICHEIRO JSON ---
+base = os.path.dirname(__file__)
+ficheiro = os.path.join(base, "playermoney.json")
+
+if not os.path.isfile(ficheiro):
+    with open(ficheiro, "w") as f:
+        json.dump({"dinheiro": 1000}, f)
+
+with open(ficheiro, "r") as f:
+    dados = json.load(f)
+    dinheiro_jogador = dados.get("dinheiro", 1000)
+
+# --- INICIALIZAÇÃO ---
 pygame.init()
-
-# Ecrã em fullscreen
-JANELA = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+TELA = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 pygame.display.set_caption("🎰 Slot Machine")
+LARGURA, ALTURA = TELA.get_size()
 
-# Obter dimensões do ecrã
-LARGURA, ALTURA = JANELA.get_size()
-
-# Cores
+# --- CORES ---
 BRANCO = (255, 255, 255)
 VERDE = (0, 200, 0)
 VERMELHO = (200, 0, 0)
 CINZA = (60, 60, 60)
 AMARELO = (255, 255, 0)
+AZUL = (0, 120, 255)
+PRETO = (0, 0, 0)
+CINZA_CLARO = (100, 100, 100)
+PRATA = (180, 180, 180)
 
-# Fontes com fallback automático (emoji ou texto)
+# --- FONTES ---
 try:
     FONTE = pygame.font.SysFont("Noto Color Emoji", int(ALTURA * 0.15))
 except:
     FONTE = pygame.font.SysFont(None, int(ALTURA * 0.15))
-
 FONTE_PEQUENA = pygame.font.SysFont(None, int(ALTURA * 0.04))
 FONTE_MEDIA = pygame.font.SysFont(None, int(ALTURA * 0.06))
 
 
+# --- CLASSES ---
 class Button:
     def __init__(self, texto, x, y, largura, altura, cor_normal, cor_hover, acao=None):
         self.texto = texto
@@ -37,20 +52,19 @@ class Button:
         self.cor_hover = cor_hover
         self.acao = acao
 
-    def desenhar(self, superficie):
+    def desenhar(self, superficie, ativo=True):
         mouse = pygame.mouse.get_pos()
         clique = pygame.mouse.get_pressed()
 
-        # Hover + clique
-        if self.rect.collidepoint(mouse):
-            pygame.draw.rect(superficie, self.cor_hover, self.rect, border_radius=15)
+        cor = self.cor_normal if ativo else CINZA
+        if ativo and self.rect.collidepoint(mouse):
+            cor = self.cor_hover
             if clique[0] and self.acao:
                 pygame.time.delay(150)
                 self.acao()
-        else:
-            pygame.draw.rect(superficie, self.cor_normal, self.rect, border_radius=15)
 
-        # Texto do botão
+        pygame.draw.rect(superficie, cor, self.rect, border_radius=15)
+
         texto = FONTE_PEQUENA.render(self.texto, True, BRANCO)
         superficie.blit(
             texto,
@@ -63,18 +77,45 @@ class SlotMachine:
     def __init__(self):
         self.simbolos = ["🍒", "🍋", "🍊", "🍉", "⭐", "🔔", "7️⃣"]
         self.resultado = ["❓", "❓", "❓"]
-        self.saldo = 100
-        self.aposta = 10
+        self.saldo = dinheiro_jogador
+        self.aposta = 50
         self.mensagem = "Clique em JOGAR"
+        self.animando = False
+
+    def aumentar_aposta(self):
+        if not self.animando and self.aposta < self.saldo:
+            self.aposta += 10
+
+    def diminuir_aposta(self):
+        if not self.animando and self.aposta > 10:
+            self.aposta -= 10
 
     def rodar(self):
+        if self.animando:
+            return
+
         if self.saldo < self.aposta:
             self.mensagem = "💸 Saldo insuficiente!"
             return
 
-        self.resultado = random.choices(self.simbolos, k=3)
+        self.animando = True
         self.saldo -= self.aposta
+        self.guardar_dinheiro()
+
+        # --- ANIMAÇÃO ---
+        start_time = time.time()
+        duracao = 1.5  # segundos
+        while time.time() - start_time < duracao:
+            self.resultado = random.choices(self.simbolos, k=3)
+            desenhar_tudo()
+            pygame.display.update()
+            pygame.time.delay(80)
+
+        # --- RESULTADO FINAL ---
+        self.resultado = random.choices(self.simbolos, k=3)
         self.verificar_resultado()
+        self.guardar_dinheiro()
+        self.animando = False
 
     def verificar_resultado(self):
         s1, s2, s3 = self.resultado
@@ -90,28 +131,58 @@ class SlotMachine:
         else:
             self.mensagem = "❌ Não ganhou!"
 
+    def guardar_dinheiro(self):
+        with open(ficheiro, "w") as f:
+            json.dump({"dinheiro": self.saldo}, f)
+
     def desenhar(self, superficie):
         superficie.fill(CINZA)
 
-        # Cabeçalho
+        # --- TÍTULO ---
         titulo = FONTE_MEDIA.render("🎰 SLOT MACHINE 🎰", True, AMARELO)
         superficie.blit(titulo, ((LARGURA - titulo.get_width()) / 2, ALTURA * 0.05))
 
-        # Mostrar resultado (centrado)
-        espaco = LARGURA // 5
-        inicio_x = (LARGURA - (espaco * 2)) / 2
+        # --- CAIXA DOS SÍMBOLOS ---
+        largura_caixa = LARGURA * 0.6
+        altura_caixa = ALTURA * 0.3
+        x_caixa = (LARGURA - largura_caixa) / 2
+        y_caixa = ALTURA * 0.3
+
+        pygame.draw.rect(superficie, PRATA, (x_caixa - 10, y_caixa - 10, largura_caixa + 20, altura_caixa + 20), border_radius=30)
+        pygame.draw.rect(superficie, PRETO, (x_caixa, y_caixa, largura_caixa, altura_caixa), border_radius=25)
+        pygame.draw.rect(superficie, CINZA_CLARO, (x_caixa + 5, y_caixa + 5, largura_caixa - 10, altura_caixa - 10), border_radius=25)
+
+        # --- SÍMBOLOS ---
+        espaco = largura_caixa / 3
         for i, simbolo in enumerate(self.resultado):
             texto = FONTE.render(simbolo, True, BRANCO)
-            superficie.blit(texto, (inicio_x + i * espaco, ALTURA * 0.35))
+            x_simbolo = x_caixa + i * espaco + (espaco - texto.get_width()) / 2
+            y_simbolo = y_caixa + (altura_caixa - texto.get_height()) / 2
+            superficie.blit(texto, (x_simbolo, y_simbolo))
 
-        # Mostrar saldo e mensagem
+        # --- INFO ---
         info = FONTE_PEQUENA.render(f"💰 Saldo: {self.saldo}€", True, BRANCO)
         msg = FONTE_PEQUENA.render(self.mensagem, True, BRANCO)
         superficie.blit(info, (40, 40))
         superficie.blit(msg, (40, 90))
 
+        aposta_txt = FONTE_PEQUENA.render(f"Aposta atual: {self.aposta}€", True, BRANCO)
+        superficie.blit(aposta_txt, ((LARGURA - aposta_txt.get_width()) / 2, ALTURA * 0.72))
 
+
+# --- FUNÇÃO DE DESENHO GLOBAL (necessária para animação) ---
+def desenhar_tudo():
+    maquina.desenhar(TELA)
+    botao_jogar.desenhar(TELA, not maquina.animando)
+    botao_sair.desenhar(TELA)
+    botao_menos.desenhar(TELA, not maquina.animando)
+    botao_mais.desenhar(TELA, not maquina.animando)
+
+
+# --- LOOP PRINCIPAL ---
 def main():
+    global maquina, botao_jogar, botao_sair, botao_menos, botao_mais
+
     maquina = SlotMachine()
 
     def jogar():
@@ -121,13 +192,19 @@ def main():
         pygame.quit()
         sys.exit()
 
-    # Botões (centrados na parte inferior)
     largura_botao = LARGURA * 0.15
     altura_botao = ALTURA * 0.08
-    y_botao = ALTURA * 0.8
+    y_botao = ALTURA * 0.82
 
     botao_jogar = Button("JOGAR", LARGURA * 0.3, y_botao, largura_botao, altura_botao, VERDE, (0, 255, 0), jogar)
     botao_sair = Button("SAIR", LARGURA * 0.55, y_botao, largura_botao, altura_botao, VERMELHO, (255, 0, 0), sair)
+
+    largura_peq = ALTURA * 0.07
+    altura_peq = ALTURA * 0.07
+    y_peq = ALTURA * 0.7
+
+    botao_menos = Button("-", LARGURA * 0.37, y_peq, largura_peq, altura_peq, AZUL, (0, 180, 255), maquina.diminuir_aposta)
+    botao_mais = Button("+", LARGURA * 0.58, y_peq, largura_peq, altura_peq, AZUL, (0, 180, 255), maquina.aumentar_aposta)
 
     clock = pygame.time.Clock()
 
@@ -137,10 +214,7 @@ def main():
                 evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE):
                 sair()
 
-        maquina.desenhar(JANELA)
-        botao_jogar.desenhar(JANELA)
-        botao_sair.desenhar(JANELA)
-
+        desenhar_tudo()
         pygame.display.update()
         clock.tick(30)
 
